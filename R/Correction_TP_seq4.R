@@ -8,6 +8,8 @@ library(tsibble)
 library(tsbox)
 library(imputeTS)
 library(lubridate)
+library(readr)
+
 
 # ### Exercice 1: Import de data frame et Création d'objets TS
 # 
