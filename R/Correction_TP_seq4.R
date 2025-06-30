@@ -8,6 +8,7 @@ library(tsibble)
 library(tsbox)
 library(imputeTS)
 library(lubridate)
+library(RJDemetra)
 
 # ### Exercice 1: Import de data frame et Création d'objets TS
 # 
