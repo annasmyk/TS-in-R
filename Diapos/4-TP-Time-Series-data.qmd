@@ -1,0 +1,131 @@
+---
+title: "TP : Manipulation de séries temporelles avec R"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, collapse = FALSE, warning = FALSE,
+                      message = FALSE,
+					  cache = FALSE)
+```
+
+
+Installation packages 
+
+```{r,warning=FALSE, message=FALSE, eval=TRUE}
+
+install.packages(c("zoo", "xts", "tsibble", "lubridate","tsbox", "imputeTS"))
+
+library(dplyr)
+library(zoo)
+library(xts)
+library(tsibble)
+library(tsbox)
+library(imputeTS)
+library(lubridate)
+
+```
+
+Vous pouvez insérer des chunks de code pour répondre aux questions
+
+### Exercice 1: Import de data frame et Création d'objets TS
+
+- importer ipi_nace4.csv du repertoire Data
+
+- quels formatages sont necessaires ?
+
+- créer un objet TS avec la série RF3030 (attention au start)
+
+- afficher valeurs janvier 2000 et décembre 2019
+
+- créer un objet TS par type de mois (janvier, février) pour les 3 dernieres années de la série
+
+### Exercice 2: Création de data frames et formatage dates
+
+- importer données US_construction.csv du repertoire Data 
+
+(ouvrir fichier et voir que 7 premières lignes = meta data)
+
+- formater la date
+
+- convertir la série de valeurs en objet TS
+
+### Exercice 3: Séquences de dates et création de data frames 
+
+- créer une série de dates mensuelles entre fevrier 2019 et novembre 2023
+
+- extraire les valeurs de l'année 2020 de l'objet TS de la série Ipi RF3030 (y_raw)
+
+- créer un data frame série Ipi RF3030 pour l'année 2020
+
+- créer un data frame avec valeurs Ipi RF3030 de 2020 mais avec date correspondante en 2024
+
+### Exercice 4: série temporelle avec valeurs ad hoc 
+
+Créer une série temporelle mensuelle qui commence en 2000, qui se termine en janvier 2020, 
+qui vaut 1 en avril 2009 et 0 à toutes les autres dates.
+
+Option 1 : utiliser la fonction `window()`
+
+Option 2 : utiliser `time()` directement
+
+
+### Exercice 5: Jointures 
+
+- créer le TS correspondant à la série ipi RF1011
+
+- créer un mts avec RF3030 et RF1011 entre 2020 et 2023
+
+- créer UNE série ayant les valeurs de RF3030 entre 2010 et 2020 et les valeurs de RF1011 entre 2021 et la fin de la série 
+
+### Exercice 6: Taux de variation 
+
+- ecrire une fonction taux de variation par rapport à la période précedente
+(mensuelle ou trimestrielle)
+
+- puis par rapport à l'année précédente
+
+
+### Exercice 7: Fonctions statistiques 
+
+- calculer moyenne/ mediane/ecart type de la série IPI RF3030
+
+- calculer moyenne annuelle / trimestrielle de la série IPI RF3030, en utilisant le package xts et stocker les resultats dans un data frame
+
+### Exercice 8: Fonctions statistiques sur tsibble  
+
+- transformer le mts avec RF3030 et RF1011 entre 2020 et 2023 en tsibble
+
+- calculer les moyennes timestrielles de RF3030 et RF1011
+
+Indice: il faut utiliser à la fois group_by_key()` (identifiant série)
+et `index_by` qui permet de regrouper des dates  
+
+- À l'aide du package `lubridate`, extraire toutes les données du mois de janvier et juillet du tsibble precedent (construire une variable mois) 
+
+- À l'aide du package `lubridate`, extraire toutes les données à partir de aout 2020
+
+### Exercice 9: Valeurs manquantes 
+
+On crée la serie suivante
+
+```{r}
+série_avec_NA <- ts(c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NA, 
+  NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 
+  NA, NA, NA, NA, NA, NA, NA, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, NA, NA, NA, NA, NA, NA, 
+  NA, NA, NA, NA, NA, NA), start = 2000, frequency = 12)
+série_avec_NA
+```
+
+ 
+- Reperer les positions des valeurs manquantes
+
+- Enlever les valeurs manquantes au début de la série
+
+- Interpoler de manière linéaire les valeurs manquantes entre les 0 et les 1
+
+- Remplacer les valeurs manquantes à la fin de la série par la dernière valeur observée
+
+
+

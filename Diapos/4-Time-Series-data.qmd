@@ -1,0 +1,586 @@
+---
+title: "4 - Manipulation de Séries Temporelles en R"
+format: 
+    beamer: default
+    revealjs: default
+editor: source
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, collapse = FALSE, warning = FALSE,
+                      message = FALSE,
+                      cache = FALSE)
+library("dplyr")
+library("zoo")
+library("xts")
+library("tsibble")
+library("tsbox")
+library("imputeTS")
+library("lubridate")
+```
+
+
+### Objectifs
+
+\footnotesize
+
+Spécificité des séries temporelles: couple (index temps, valeur observée)
+
+La date est liée aux valeurs, contenue dans l'objet
+
+Fonctions spécifiques adaptées à cette structure : extractions, jointures, graphiques, autocorrelations, interpolations, lissage, modélisation, décomposition...
+
+Besoin:  utiliser des fonctions pré-codées dans des packages R
+
+(éviter de recoder)
+
+Nombreuses fonctions et packages disponibles:
+
+voir [CRAN Task View: https://cran.r-project.org/web/views/Timeseries.html](https://cran.r-project.org/web/views/Timeseries.html)
+
+### Objectifs
+
+\footnotesize
+
+Selon les besoins statistiques: différents packages requièrent différents formats 
+
+Deux exemples:
+
+- rjdverse (famille autour de JDemetra+): objets de classe TS (très courant)
+
+voir [rjdverse: https://github.com/rjdverse](https://github.com/rjdverse) 
+
+- fpp3 (forecasting principles and practice): objets de classe tsibble (prolonge la grammaire du tidyverse, permet de garder d'autres variables que la date et la valeur)
+
+voir [autour de fpp3: https://robjhyndman.com/software/](https://robjhyndman.com/software/)
+
+### De multiples standards... 
+
+\footnotesize
+
+- objets `ts` : package `stats`
+
+- objets `tsibble` : package [tsibble: https://CRAN.R-project.org/package=tsibble](https://CRAN.R-project.org/package=tsibble)
+
+- objets `zoo` package [zoo: https://CRAN.R-project.org/package=zoo](https://CRAN.R-project.org/package=zoo)
+
+- objets `xts` package [xts: https://CRAN.R-project.org/package=xts](https://CRAN.R-project.org/package=xts) 
+
+### ...et un convertisseur
+
+\footnotesize
+
+Convertisseur : package [tsbox https://CRAN.R-project.org/package=tsbox](https://CRAN.R-project.org/package=tsbox) 
+
+- conversion d'un format à l'autre
+
+- nombreuses fonctions agnostiques
+
+cf: [cheat sheet](https://blog.cynkra.com/posts/2019-04-10-tsbox-01/tsbox-cheatsheet.pdf)
+
+Manipulation de dates:
+
+- package auxiliaire [lubridate: https://lubridate.tidyverse.org/](https://lubridate.tidyverse.org/) 
+
+cf. cheat sheet
+
+### Principales opérations présentées dans cette séquence
+
+\footnotesize
+
+créations d'objets de classe TS (univariés et multivariés) et tsibble
+
+- conversions from and to data frames
+
+Manipulations de données 
+
+- extractions de sous-séries 
+
+- extractions d'attributs
+
+- jointures et création de séquences de dates
+
+Fonctions statistiques 
+
+- sommes, moyennes 
+
+- imputation de valeurs manquantes 
+
+On se concentre sur les objets de classe TS (dans une moindre mesure tsibble)
+
+### Création d'objets de classe TS univariés {.allowframebreaks}
+
+\footnotesize
+
+Fonction `ts(data = ., start = ., frequency = .)`
+
+- à partir d'un vecteur numérique (colonne de data frame...)
+
+Définition avec longueur, date de début et fréquence
+
+```{r}
+#| echo: true
+#| eval: true
+ts1 <- ts((1:24) + 100, start = c(2020, 1), frequency = 12)
+print(ts1)
+class(ts1)
+```
+
+- `frequency` est le nombre d'observations par unité de temps (ici année) : 1=annuelle, 2=semestrielle, 4=trimestrielle, 6=bi-mestrielle, 12=mensuelle
+
+Définition avec longueur, date de fin et fréquence
+```{r}
+#| echo: true
+#| eval: true
+ts(3 + 5 * rnorm(60), frequency = 4, end = c(2002, 2)) #dernier point inclus
+```
+
+Définition avec date de début et de fin 
+```{r}
+#| echo: true
+#| eval: true
+ts(3 + 5 * rnorm(72), frequency = 12, start = c(2000, 1), end = c(2004, 12)) #coupe le vecteur
+```
+
+### Création d'objets de classe TS multivariés {.allowframebreaks}
+
+\footnotesize
+
+A partir d'une matrice  
+
+```{r}
+#| echo: true
+#| eval: true
+mts_object <- ts(
+    matrix(rnorm(30), 12, 3),
+    start = c(2000, 1),
+    frequency = 12
+)
+print(mts_object)
+class(mts_object)
+is.mts(mts_object)
+```
+
+### Création d'objets de classe TS multivariés {.allowframebreaks}
+
+\footnotesize
+
+A partir d'un data frame: on extrait les colonnes numériques (matrice de valeurs) et on respécifie les dates lors de la création de l'objet mts (attention à la date de début)
+
+```{r}
+#| echo: true
+#| eval: false
+# data frame ipi
+y_raw <- ts(ipi[, "RF3030"], start = c(1990, 1), frequency = 12)
+y_raw
+
+# start=c(1990,1): résulte de la connaissance du data frame
+```
+
+### Récupération d'attributs (1/2) {.allowframebreaks}
+
+\footnotesize
+
+```{r}
+#| echo: true
+#| eval: true
+ts1 <- ts((1:24) + 100, start = c(2020, 1), frequency = 12)
+start(ts1)
+class(start(ts1))
+start(ts1)[2]
+end(ts1)
+frequency(ts1)
+```
+
+### Récupération d'attributs (2/2) {.allowframebreaks}
+
+\footnotesize
+
+création de la série des dates correspondante à un objet ts : fonction `time()`
+
+```{r}
+time(ts1) #fractions: 1/frequency
+
+# fonctions pour retrouver un format date
+# exemple
+date <- zoo::as.Date(time(ts1))
+date
+class(date)
+```
+
+Récupération de la position dans l'année d'une observation : fonction `cycle()` 
+
+```{r}
+cycle(ts1)
+class(cycle(ts1))
+```
+
+### Extraction et jointures {.allowframebreaks}
+
+\footnotesize
+
+Exemple avec deux objets ts
+
+```{r}
+#| echo: true
+#| eval: true
+ts1 <- ts(1:15, start = c(2022, 1), frequency = 12)
+ts2 <- ts(13:24, start = c(2023, 1), frequency = 12)
+```
+
+
+- extraction `ts.window` ou `tsbox::ts_span`
+
+```{r}
+#| echo: true
+#| eval: true
+ts11 <- window(ts1, start = c(2022, 6), end = c(2022, 12))
+ts11
+
+ts12 <- ts_span(ts1, "-6 month")
+ts12
+```
+
+
+Union
+```{r}
+#| echo: true
+#| eval: false
+
+# séries en tableau
+# on garde toute la couverture temporelle en rajoutant des NA
+
+ts.union(ts1, ts2) #classe mts
+
+#head(ts.union(ts1,ts2))
+```
+
+
+Intersection 
+
+```{r}
+#| echo: true
+#| eval: false
+# on ne garde que les périodes communes
+ts.intersect(ts1, ts2)
+```
+
+Conversions avec le package `tsbox` 
+
+`ts_c`: comme `ts.union`
+
+`ts_bind` : on combine plusieurs séries en une, si chevauchement la première citée l'emporte (sauf si NA), cf. exemples infra
+
+`ts_chain` : comme `ts_bind` mais avec interpolation
+
+### Listes de séries {.allowframebreaks}
+
+\footnotesize
+
+Format liste pratique pour appliquer des fonctions avec la famille 'lapply()'
+
+```{r}
+#| echo: true
+#| eval: true
+
+ma_liste <- ts_tslist(mts_object)
+ma_liste[2]
+class(ma_liste[2])
+ma_liste[[2]]
+class(ma_liste[[2]])
+```
+
+
+
+### Opérations arithmétiques sur les séries {.allowframebreaks}
+
+\footnotesize
+
+```{r}
+#| echo: true
+#| eval: true
+
+ts1 <- ts(1:6, start = c(2023, 11), frequency = 12)
+ts1
+ts2 <- ts(10:15, start = c(2024, 1), frequency = 12)
+ts2
+
+# opérations simples: sur périodes communes (coupe)
+ts1 + ts2 # idem pour - * / 
+
+# avec ts box
+
+
+# périodes communes 
+ts1 %ts+% ts2
+
+# on peut forcer le format de la série figurant à gauche
+ts_df(ts1) %ts+% ts2
+
+```
+
+
+
+### Manipulation de dates {.allowframebreaks}
+
+\footnotesize
+
+création de séquences de dates sous R  avec la fonction `seq()` 
+
+```{r}
+#| echo: true
+#| eval: true
+date <- seq(from = as.Date("2024-01-01"),
+            to = as.Date("2024-12-31"),
+            by = "month")
+date
+
+date <- seq(from = as.Date("2024-01-01"),
+            to = as.Date("2024-12-31"),
+            by = "quarter")
+date
+
+```
+
+### Manipulation de dates {.allowframebreaks}
+
+\footnotesize
+
+Manipulation avec le package lubridate (voir cheat sheet) qui contient de très nombreuses fonctions, ici deux exemples:
+
+- conversion au format date d'une chaîne de caractères, fonctions `ymd()`, `ymd_hms`, `dmy()`, `dmy_hms`, `mdy()` 
+
+```{r}
+#| echo: true
+#| eval: true
+"Jan-2020"
+"Jan-2020" |> class()
+date <- lubridate::my("Jan-2020")
+date 
+class(date)
+```
+
+### Manipulation de dates {.allowframebreaks}
+
+\footnotesize
+
+- extraction d'attributs/modification de la composante d'une date avec les fonctions `year()`, `month()`, `mday()`, `hour()`, `minute()` and `second()` 
+
+```{r}
+#| echo: true
+#| eval: true
+
+# création d'une variable date
+date <- seq(from = as.Date("2024-01-01"),
+            to = as.Date("2024-03-31"),
+            by = "month")
+date
+
+month(date)
+month(date) |> class()
+month(date[2]) <- 11
+date
+```
+
+### Série retardée {.allowframebreaks}
+
+\footnotesize
+
+Pour calculer la série retardée/avancée, il suffit d'utiliser la fonction `lag()`, mais attention au parmetrage selon le package
+
+```{r}
+#| echo: true
+#| eval: true
+
+ts1 <- ts(1:6, start = c(2024, 1), frequency = 12)
+ts1
+
+# package stats
+stats::lag(ts1, k = -1) # attention période série finale
+# package dplyr sur vecteur numérique
+dplyr::lag(as.vector(ts1), 1)
+
+# package tsbox
+tsbox::ts_lag(ts1) #k=1 par defaut
+tsbox::ts_lag(ts1, 12)
+tsbox::ts_lag(ts1, 4)
+
+```
+### Différenciation {.allowframebreaks}
+
+\footnotesize
+
+Différenciation
+- à l'ordre k
+$$
+Diff(k) = {X}_t- X_{t-k}
+$$
+- le plus souvent à l'ordre 1 (tendance) et/ou à l'ordre 12,4... saisonnalité 
+
+$$
+Diff(1) = {X}_t- X_{t-1}
+$$
+$$
+Diff(12) = {X}_t- X_{t-12}
+$$
+
+```{r}
+#| echo: true
+#| eval: true
+
+ts1 <- ts(1:24, start = c(2024, 1), frequency = 12)
+ts1
+
+# diff d'ordre 1
+diff1 <- ts1 - lag(as.vector(ts1))
+diff1
+diff1 <- ts1 - ts_lag(ts1) #attention NA et période de la série finale
+diff1
+# ou fonction directe
+ts_diff(ts1)
+
+# diff d'ordre 12
+diff12 <- ts1 - ts_lag(ts1, 12)
+diff12
+
+# ou fonction directe 
+ts_diffy(ts1)
+```
+### Agrégation {.allowframebreaks}
+
+\footnotesize
+
+Passer à une fréquence plus basse avec une fonction spécifique (somme, moyenne, dernière valeur)
+
+exemple de solution : `tsbox::ts_frequency`
+
+```{r}
+#| echo: true
+#| eval: true
+
+ts1 <- ts((1:12) + 100, start = c(2024, 1), frequency = 12)
+ts1
+ts_frequency(ts1, "quarter") #default: mean
+ts_frequency(ts1, "quarter", "sum") 
+ts_frequency(ts1, "quarter", "last")
+```
+Désagrégation temporelle vers une fréquence plus élevée : problème plus complexe, voir packages rjd3bench,..
+
+### Summary statistics {.allowframebreaks}
+
+\footnotesize
+
+Fonctions usuelles : moyenne, médiane, écart-type
+
+```{r}
+#| echo: true
+#| eval: true
+
+ts1 <- ts((1:24) + 100, start = c(2024, 1), frequency = 12)
+ts1
+mean(ts1)
+median(ts1)
+sd(ts1)
+```
+
+### Summary statistics {.allowframebreaks}
+
+\footnotesize
+
+Par type de période : solution possible fonctions du package xts : `apply.monthly()`, `apply.quarterly()`, `apply.yearly()`..
+
+Pour cela il faut auparavant convertir les données au format `xts`.
+
+Par exemple pour calculer la moyenne annuelle :
+
+```{r}
+library(xts)
+#| echo: true
+#| eval: true
+ts1 <-ts((1:24) + 100, start = c(2023, 1), frequency = 12)
+ts1
+moy_an <- xts::apply.yearly(as.xts(ts1), mean)
+moy_an
+```
+
+### Séries temporelles avec données auxiliaires {.allowframebreaks}
+
+\footnotesize
+
+Le format `tsibble` permet de garder des variables descriptives dans une même table de données avec les séries temporelles 
+
+- les séries temporelles sont empilées selon une clé (key) 
+
+- la date est stockée dans index 
+
+
+Ce format:
+
+- permet d'utiliser le package fable et outils connexes 
+
+- offre de nombreuses possibilités graphiques
+
+- se manipule bien avec la grammaire tidyverse (dplyr)
+
+Voir  [https://tsibble.tidyverts.org/](https://tsibble.tidyverts.org/)
+
+### Exemple de tsibble 
+
+\footnotesize
+
+```{r}
+library("tsibble")
+mts_object
+as_tsibble(mts_object)
+```
+
+voir exemples de données dans le package tsibbledata
+[https://tsibbledata.tidyverts.org/](https://tsibbledata.tidyverts.org/)
+
+
+### Valeurs manquantes {.allowframebreaks}
+
+\footnotesize
+
+On peut utiliser des fonctions du package zoo ou imputeTS (apr exemple) pour
+
+- repérer les valeurs manquantes : fonction `is.na`
+
+- les enlever:  au début et/ou à la fin `zoo::na.trim()`
+
+- les imputer 
+
+    - dernière valeur `zoo::na.locf`
+    
+    - interpolation linéaire `zoo::na.approx()`
+    
+    - autres méthodes: moyenne, splines, kalman filter 
+    
+Voir package `imputeTS` (cheat sheet)
+
+### Valeurs manquantes {.allowframebreaks}
+
+\footnotesize
+
+```{r}
+#| echo: true
+#| eval: true
+
+ts1 <-ts((1:12) + 100, start = c(2024, 1), frequency = 12)
+ts1
+#ajout NA début
+ts2 <- ts(as.numeric(rep(NA, 2)), start = c(2023, 12), frequency = 12)
+ts2
+ts12 <- ts_bind(ts1, ts2)
+ts12
+# ajout de NA au milieu
+month(as.Date(time(ts12))) # pas de NA ici
+ts12[month(as.Date(time(ts12))) %in% c(3, 8)] <- NA
+ts12
+
+#on enlève les valeurs manquantes du début 
+ts12_i <- zoo::na.trim(ts12, sides = "left")
+ts12_i
+ts12_ii <- imputeTS::na_mean(ts12_i) # moyenne de la série sans NA
+ts12_ii
+```
