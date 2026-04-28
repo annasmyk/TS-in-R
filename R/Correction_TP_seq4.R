@@ -9,6 +9,12 @@ library(tsbox)
 library(imputeTS)
 library(lubridate)
 
+library(readr)
+
+
+library(RJDemetra)
+
+
 # ### Exercice 1: Import de data frame et Création d'objets TS
 # 
 # - importer ipi_nace4.csv du repertoire Data
