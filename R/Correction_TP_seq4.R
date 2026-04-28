@@ -1,5 +1,5 @@
 
-#install.packages(c("zoo", "xts", "tsibble", "lubridate","tsbox", "imputeTS"))
+# install.packages(c("zoo", "xts", "tsibble", "lubridate","tsbox", "imputeTS"))
 
 library(dplyr)
 library(zoo)
@@ -14,8 +14,9 @@ library(lubridate)
 # - importer ipi_nace4.csv du repertoire Data
 
 # importer ipi_nace4.csv du repertoire 
-ipi <- read.csv2("V:/Formations-Stats/Series-Temporelles-R_Initiation/Data/IPI_nace4.csv")
-
+getwd()
+ipi <- read.csv2("data/IPI_nace4.csv")
+class(ipi)
 # quels formatages sont necessaires ?
 str(ipi)
 ipi$date <- as.Date(ipi$date, format = "%d/%m/%Y")
@@ -23,14 +24,19 @@ ipi$date <- as.Date(ipi$date, format = "%d/%m/%Y")
 ipi[, -1] <- sapply(ipi[, -1], as.numeric)
 str(ipi)
 
+1:100
+a<-ts(1:100)
+
+
 # creer un objet TS avec la serie RF3030 (attention au start)
 y_raw <- ts(ipi[, "RF3030"], start=c(1990,1),frequency = 12)
 y_raw
-
+class(y_raw)
 ### graphique simple en attendant de voir plus sphistiqué
 plot.ts(y_raw)
 # # ajout autre courbe
 lines(1.5*y_raw, col = "red")
+plot.ts(1.5*y_raw, col = "red")
 
 # 
 # - afficher valeurs janvier 2000 et décembre 2019

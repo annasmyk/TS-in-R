@@ -4,6 +4,10 @@
 
 # Séquence 1 -------------------------------------------------------------------
 
+
+# first -------------------------------------------------------------------
+
+
 ## Exercice 2.2
 BC <- 13
 AC <- 5
@@ -22,6 +26,8 @@ racine <- sqrt(1:100)
 
 ## Exercice 2.6
 annees_bissextiles <- seq(from = 2004, to = 2050, by = 4)
+
+|> 
 
 ## Exercice 2.7
 letters[23]
@@ -68,6 +74,8 @@ ipi %>%
     pivot_longer(cols = -date) %>%
     filter(value == min(value) | value == max(value))
 
+ipi
+
 # -------------
 
 ipi2 <- ipi %>%
@@ -85,3 +93,9 @@ ipi3 <- ipi %>% pivot_longer(cols = -date) %>%
     mutate(value_sa = value - month_mean) %>%
     pivot_wider(id_cols = date, values_from = value_sa)
 
+
+library(dplyr)
+ipi |>  pivot_longer(cols = -date) 
+
+%>%
+  filter(value == min(value) | value == max(value))
